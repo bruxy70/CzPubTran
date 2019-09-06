@@ -14,12 +14,7 @@ setup(
     version=REVISION,
     author=PROJECT_AUTHORS,
     author_email=PROJECT_EMAILS,
-    packages=['czpubtran'],
-    zip_safe=True,
-    include_package_data=False,
-    install_requires=[asyncio,aiohttp,async_timeout],
-    test_suite='',
-    tests_require=[],
+    packages=setuptools.find_packages(),
     url=PROJECT_URL,
     description=SHORT_DESCRIPTION,
     long_description_markdown_filename='README.md',  # uses setuptools-markdown
