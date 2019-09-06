@@ -1,4 +1,4 @@
-from setuptools import setup
+import setuptools
 #import os
 
 #PROJECT_ROOT, _ = os.path.split(__file__)
@@ -9,7 +9,7 @@ PROJECT_EMAILS = 'vasek.chaloupka@hotmail.com'
 PROJECT_URL = "https://github.com/bruxy70/CzPubTran"
 SHORT_DESCRIPTION = 'Calling CHAPS REST API to get information about public transit in CZ'
 
-setup(
+setuptools.setup(
     name=PROJECT_NAME.lower(),
     version=REVISION,
     author=PROJECT_AUTHORS,
