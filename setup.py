@@ -17,19 +17,13 @@ setup(
     packages=['czpubtran'],
     zip_safe=True,
     include_package_data=False,
-    install_requires=[],
+    install_requires=[asyncio,aiohttp,async_timeout],
     test_suite='',
     tests_require=[],
     url=PROJECT_URL,
     description=SHORT_DESCRIPTION,
     long_description_markdown_filename='README.md',  # uses setuptools-markdown
     license='MIT',
-    entry_points={
-        'console_scripts': [
-            'czpubtran.find_connection = czpubtran.find_connection:find_connection',
-            'czpubtran.find_schedule_guid = czpubtran.find_schedule_guid:find_schedule_guid'
-        ]
-    },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
