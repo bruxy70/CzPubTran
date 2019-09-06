@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: czpubtran
+Version: 0.0.1
+Summary: Calling CHAPS REST API to get information about public transit in CZ
+Home-page: https://github.com/bruxy70/CzPubTran
+Author: Václav Chaloupka
+Author-email: vasek.chaloupka@hotmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Software Development :: Testing
