@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import aiohttp
 from czpubtran.api import czpubtran
 
 logging.basicConfig(level=logging.ERROR)

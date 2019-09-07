@@ -94,6 +94,8 @@ class czpubtran():
                 self._connections.append(c)
             if len(c)>0:
                 self._line = self._connections[0]["line"]
+            else:
+                self._line = ''
             return True
         except ErrorGettingData as e:
             self._load_defaults()
