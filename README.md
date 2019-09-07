@@ -9,7 +9,7 @@ pip install czpubtran
 
 # Example usage
 
-``
+```
 import asyncio
 import aiohttp
 import logging
@@ -30,4 +30,4 @@ async def test():
         print(f"line {connection['line']} at {connection['depTime']} from {connection['depStation']} - > {connection['arrTime']} to {connection['arrStation']} (delay: {connection['delay']} min)")
 
 asyncio.run(test())
-``
+```
