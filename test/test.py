@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 import logging
-from czpubtran import (
+from czpubtran.api import (
     czpubtran
 )
 

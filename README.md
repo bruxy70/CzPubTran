@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 async def test():
     session=aiohttp.ClientSession(raise_for_status=True)
-    bus = czpubtran.czpubtran(session,'')
+    bus = czpubtran(session,'')
     await bus.async_find_connection('Cernosice, zel.zast.','Florenc','ABCz')
     print(f'Connection from {bus.origin} to {bus.destination} using timetable{bus.combination_id}')
     print('------------------------------------------------')
