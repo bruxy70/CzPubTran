@@ -13,7 +13,7 @@ pip install czpubtran
 import asyncio
 import aiohttp
 import logging
-from czpubtran import czpubtran
+from czpubtran.api import czpubtran
 
 logging.basicConfig(level=logging.DEBUG)
 
