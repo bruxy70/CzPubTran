@@ -36,7 +36,7 @@ class czpubtran():
         self._origin = ''
         self._destination = ''
         self._departure = ''
-        self._first_connection = ''
+        self._line = ''
         self._combination_id = ''
         self._duration = ''
         self._connections = []
@@ -93,7 +93,7 @@ class czpubtran():
                     c['delay'] = ''
                 self._connections.append(c)
             if len(c)>0:
-                self._first_connection = self._connections[0]["line"]
+                self._line = self._connections[0]["line"]
             return True
         except ErrorGettingData as e:
             self._load_defaults()
@@ -182,8 +182,8 @@ class czpubtran():
         return self._departure
 
     @property
-    def first_connection(self):
-        return self._first_connection
+    def line(self):
+        return self._line
 
     @property
     def duration(self):
