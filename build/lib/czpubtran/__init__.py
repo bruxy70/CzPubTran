@@ -1,2 +1,0 @@
-""" czpubtran library for python
-"""

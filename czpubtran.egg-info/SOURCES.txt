@@ -1,9 +1,0 @@
-README.md
-setup.cfg
-setup.py
-czpubtran/__init__.py
-czpubtran/czpubtran.py
-czpubtran.egg-info/PKG-INFO
-czpubtran.egg-info/SOURCES.txt
-czpubtran.egg-info/dependency_links.txt
-czpubtran.egg-info/top_level.txt
