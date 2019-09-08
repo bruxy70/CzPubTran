@@ -1,7 +1,7 @@
 import setuptools
 #import os
 
-REVISION = '0.1.4'
+REVISION = '0.1.5'
 PROJECT_NAME = 'czpubtran'
 PROJECT_AUTHORS = "Václav Chaloupka"
 PROJECT_EMAILS = 'vasek.chaloupka@hotmail.com'
@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name=PROJECT_NAME.lower(),
-    python_requires=">=3.5.0",
+    python_requires=">=3.6.0",
     version=REVISION,
     author=PROJECT_AUTHORS,
     author_email=PROJECT_EMAILS,
@@ -32,7 +32,6 @@ setuptools.setup(
     classifiers=(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",

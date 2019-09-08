@@ -1,4 +1,9 @@
-"""czpubtran library
+"""
+czpubtran library
+Calling CHAPS REST API to get information about public transport between two points
+It uses two APIs - one to get guid of the timetable combination. Second (async_find_connection) to find the connection
+The first one is internal and is called automatically if the guid is empty or expired
+More info on https://crws.docs.apiary.io/
 """
 import logging, json
 from datetime import datetime, date, time, timedelta
@@ -25,6 +30,8 @@ class ErrorGettingData(Exception):
         return repr(self.value)
 
 class czpubtran():
+    
+    """Constructor"""
     def __init__(self, session, user_id):
         """Setup of the czpubtran library"""
         self._user_id = user_id
@@ -33,6 +40,7 @@ class czpubtran():
         self._session = session
     
     def _load_defaults(self):
+        """Erase the information"""
         self._origin = ''
         self._destination = ''
         self._departure = ''
@@ -54,10 +62,7 @@ class czpubtran():
         self._destination = destination
         self._combination_id = combination_id
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
-        if self._user_id=='':
-            payload= {'from':origin, 'to':destination}
-        else:
-            payload= {'from':origin, 'to':destination,'userId':self._user_id}
+        payload = {'from':origin, 'to':destination,'userId':self._user_id} if self._user_id!='' else {'from':origin, 'to':destination}
         _LOGGER.debug( f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):            
@@ -92,10 +97,7 @@ class czpubtran():
                 else:
                     c['delay'] = ''
                 self._connections.append(c)
-            if len(c)>0:
-                self._line = self._connections[0]["line"]
-            else:
-                self._line = ''
+            self.line = self._connections[0]["line"] if len(c)>0 else ''
             return True
         except ErrorGettingData as e:
             self._load_defaults()
@@ -107,20 +109,18 @@ class czpubtran():
             return False
 
     def _guid_exists(self,combination_id):
-        """Return False if Combination ID needs to be updated."""
+        """Return False if the timetable Combination ID needs to be updated."""
         try:
             if combination_id in self._combination_ids:
                 today=datetime.now().date()
-                if self._combination_ids[combination_id]['validTo'] >= today:
-                    return True
-                else:
-                    return False
+                return bool(self._combination_ids[combination_id]['validTo'] >= today)
             else:
                 return False
         except:
             return False # Refresh data on Error
 
     def _guid(self,combination_id):
+        """Return guid of the timetable combination"""
         if combination_id in self._combination_ids:
             return self._combination_ids[combination_id]['guid']
         else:
@@ -128,21 +128,19 @@ class czpubtran():
             return ''
     
     def _add_combination_id(self,combination_id,guid,valid_to):
+        """Register newly found timetable Combination ID - so that it does not have to be obtained each time"""
         if combination_id not in self._combination_ids:
             self._combination_ids[combination_id]={}
         self._combination_ids[combination_id]['guid']=guid
         self._combination_ids[combination_id]['validTo']=valid_to
 
     async def _async_find_schedule_guid(self,combination_id):
-        """Find guid of the schedule (Combination ID)"""
+        """Find guid of the timetable Combination ID (combination ID can be found on the CHAPS API web site)"""
         if self._guid_exists(combination_id):
             return True
         _LOGGER.debug( f'Updating CombinationInfo guid {combination_id}')
         url_combination  = 'https://ext.crws.cz/api/'
-        if self._user_id=="":
-            payload = {}
-        else:
-            payload= {'userId':self._user_id}
+        payload = {'userId':self._user_id} if self._user_id !="" else {}
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):            
                 combination_response = await self._session.get(url_combination,params=payload)
@@ -167,6 +165,7 @@ class czpubtran():
             _LOGGER.error( 'Exception reading guid data')
         return False
 
+    """Properties"""
     @property
     def origin(self):
         return self._origin
