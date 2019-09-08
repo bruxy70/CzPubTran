@@ -64,49 +64,49 @@ class czpubtran():
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
         payload = {'from':origin, 'to':destination,'userId':self._user_id} if self._user_id!='' else {'from':origin, 'to':destination}
         _LOGGER.debug( f'Checking connection from {origin} to {destination}')
-        try:
-            with async_timeout.timeout(HTTP_TIMEOUT):            
-                connection_response = await self._session.get(url_connection,params=payload)
-            if connection_response is None:
-                raise ErrorGettingData('Response timeout')
-            _LOGGER.debug( f'(url - {str(connection_response.url)}')
-            if connection_response.status != 200:
-                raise ErrorGettingData(f'API returned response code {connection_response.status} ({await connection_response.text()})')
-            connection_decoded = await connection_response.json()
-            if connection_decoded is None:
-                raise ErrorGettingData('Error passing the JSON response')
-            if "handle" not in connection_decoded:
-                raise ErrorGettingData(f'Did not find any connection from {entity._origin} to {entity._destination}')
-            connection = connection_decoded["connInfo"]["connections"][0]
-            _LOGGER.debug( f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
-            self._duration = connection["timeLength"]
-            self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
-            self._connections.clear()
-            for trains in connection["trains"]:
-                c={}
-                c['line']=str(trains["trainData"]["info"]["num1"])
-                c['depTime']=trains["trainData"]["route"][0]["depTime"]
-                c['depStation']=trains["trainData"]["route"][0]["station"]["name"]
-                if "arrTime" in trains["trainData"]["route"][1]:
-                    c['arrTime']=trains["trainData"]["route"][1]["arrTime"]
-                else:
-                    c['arrTime']=trains["trainData"]["route"][1]["depTime"]
-                c['arrStation']=trains["trainData"]["route"][1]["station"]["name"]
-                if 'delay' in trains and trains['delay'] >0:
-                    c['delay'] = trains["delay"]
-                else:
-                    c['delay'] = ''
-                self._connections.append(c)
-            self.line = self._connections[0]["line"] if len(c)>0 else ''
-            return True
-        except ErrorGettingData as e:
-            self._load_defaults()
-            _LOGGER.error( f'Error getting connection: {e.value}')
-            return False
-        except:
-            self._load_defaults()
-            _LOGGER.error( 'Exception reading connection data')
-            return False
+        # try:
+        with async_timeout.timeout(HTTP_TIMEOUT):            
+            connection_response = await self._session.get(url_connection,params=payload)
+        if connection_response is None:
+            raise ErrorGettingData('Response timeout')
+        _LOGGER.debug( f'(url - {str(connection_response.url)}')
+        if connection_response.status != 200:
+            raise ErrorGettingData(f'API returned response code {connection_response.status} ({await connection_response.text()})')
+        connection_decoded = await connection_response.json()
+        if connection_decoded is None:
+            raise ErrorGettingData('Error passing the JSON response')
+        if "handle" not in connection_decoded:
+            raise ErrorGettingData(f'Did not find any connection from {entity._origin} to {entity._destination}')
+        connection = connection_decoded["connInfo"]["connections"][0]
+        _LOGGER.debug( f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
+        self._duration = connection["timeLength"]
+        self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
+        self._connections.clear()
+        for trains in connection["trains"]:
+            c={}
+            c['line']=str(trains["trainData"]["info"]["num1"])
+            c['depTime']=trains["trainData"]["route"][0]["depTime"]
+            c['depStation']=trains["trainData"]["route"][0]["station"]["name"]
+            if "arrTime" in trains["trainData"]["route"][1]:
+                c['arrTime']=trains["trainData"]["route"][1]["arrTime"]
+            else:
+                c['arrTime']=trains["trainData"]["route"][1]["depTime"]
+            c['arrStation']=trains["trainData"]["route"][1]["station"]["name"]
+            if 'delay' in trains and trains['delay'] >0:
+                c['delay'] = trains["delay"]
+            else:
+                c['delay'] = ''
+            self._connections.append(c)
+        self._line = '' if len(self._connections)==0 else self._connections[0]["line"]
+        return True
+        # except ErrorGettingData as e:
+        #     self._load_defaults()
+        #     _LOGGER.error( f'Error getting connection: {e.value}')
+        #     return False
+        # except:
+        #     self._load_defaults()
+        #     _LOGGER.error( 'Exception reading connection data')
+        #     return False
 
     def _guid_exists(self,combination_id):
         """Return False if the timetable Combination ID needs to be updated."""
