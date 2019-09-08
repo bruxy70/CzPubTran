@@ -11,11 +11,8 @@ pip install czpubtran
 
 ```
 import asyncio
-import logging
 import aiohttp
 from czpubtran.api import czpubtran
-
-logging.basicConfig(level=logging.ERROR)
 
 async def test():
     session=aiohttp.ClientSession(raise_for_status=True)
