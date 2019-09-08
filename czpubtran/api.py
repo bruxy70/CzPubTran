@@ -49,6 +49,33 @@ class czpubtran():
         self._duration = ''
         self._connections = []
 
+    async def async_list_combination_ids(self):
+        """List combination IDs available for the user account"""
+        url_combination  = 'https://ext.crws.cz/api/'
+        payload = {'userId':self._user_id} if self._user_id !="" else {}
+        ids = []
+        try:
+            with async_timeout.timeout(HTTP_TIMEOUT):            
+                combination_response = await self._session.get(url_combination,params=payload)
+            if combination_response is None:
+                raise ErrorGettingData('Response timeout reading timetable combination IDs')
+            _LOGGER.debug( f'url - {combination_response.url}')
+            if combination_response.status != 200:
+                raise ErrorGettingData(f'Timetable combination IDs API returned response code {combination_response.status} ({await combination_response.text()})')
+            combination_decoded = await combination_response.json()
+            if combination_decoded is None:
+                raise ErrorGettingData('Error passing the timetable combination IDs JSON response')
+            if 'data' not in combination_decoded:
+                raise ErrorGettingData('Timetable combination IDs API returned no data')
+            for combination in combination_decoded["data"]:
+                ids.append(combination['id'])
+        except ErrorGettingData as e:
+            _LOGGER.error( f'Error getting Combinaton IDs: {e.value}')
+        except Exception as e:
+            _LOGGER.error( f'Exception reading combination IDs: {e.args}')
+        return ids
+        
+
     async def async_find_connection(self,origin,destination,combination_id):
         """Find a connection from origin to destination. Return True if succesfull."""
         if not self._guid_exists(combination_id):
@@ -103,9 +130,9 @@ class czpubtran():
             self._load_defaults()
             _LOGGER.error( f'Error getting connection: {e.value}')
             return False
-        except:
+        except Exception as e:
             self._load_defaults()
-            _LOGGER.error( 'Exception reading connection data')
+            _LOGGER.error( f'Exception reading connection data: {e.args}')
             return False
 
     def _guid_exists(self,combination_id):
@@ -161,8 +188,8 @@ class czpubtran():
                     return True
         except ErrorGettingData as e:
             _LOGGER.error( f'Error getting CombinatonInfo: {e.value}')
-        except:
-            _LOGGER.error( 'Exception reading guid data')
+        except Exception as e:
+            _LOGGER.error( f'Exception reading guid data: {e.args}')
         return False
 
     """Properties"""
