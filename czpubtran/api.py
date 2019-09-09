@@ -84,7 +84,8 @@ class czpubtran():
                     if not await self._async_find_schedule_guid(combination_id):
                         return False
             except:
-                raise ErrorGettingData('Failed to find timetable combination ID')
+                _LOGGER.error( f'Failed to find timetable combination ID')
+                return False
         self._origin = origin
         self._destination = destination
         self._combination_id = combination_id
@@ -104,6 +105,15 @@ class czpubtran():
                 raise ErrorGettingData('Error passing the JSON response')
             if "handle" not in connection_decoded:
                 raise ErrorGettingData(f'Did not find any connection from {entity._origin} to {entity._destination}')
+        except ErrorGettingData as e:
+            self._load_defaults()
+            _LOGGER.error( f'Error getting connection data: {e.value}')
+            return False
+        except Exception as e:
+            self._load_defaults()
+            _LOGGER.error( f'Exception reading connection data: {e.args}')
+            return False
+        try:
             connection = connection_decoded["connInfo"]["connections"][0]
             _LOGGER.debug( f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
             self._duration = connection["timeLength"]
@@ -126,13 +136,9 @@ class czpubtran():
                 self._connections.append(c)
             self._line = '' if len(self._connections)==0 else self._connections[0]["line"]
             return True
-        except ErrorGettingData as e:
-            self._load_defaults()
-            _LOGGER.error( f'Error getting connection: {e.value}')
-            return False
         except Exception as e:
             self._load_defaults()
-            _LOGGER.error( f'Exception reading connection data: {e.args}')
+            _LOGGER.error( f'Exception decoding received connection data: {e.args}')
             return False
 
     def _guid_exists(self,combination_id):
@@ -181,15 +187,20 @@ class czpubtran():
                 raise ErrorGettingData('Error passing the timetable combination ID JSON response')
             if 'data' not in combination_decoded:
                 raise ErrorGettingData('Timetable combination ID API returned no data')
+        except ErrorGettingData as e:
+            _LOGGER.error( f'Error getting CombinatonInfo: {e.value}')
+            return False
+        except Exception as e:
+            _LOGGER.error( f'Exception reading guid data: {e.args}')
+            return False
+        try:
             for combination in combination_decoded["data"]:
                 if combination['id'] == combination_id:
                     self._add_combination_id(combination_id,combination["guid"],datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date())
                     _LOGGER.debug( f"found guid {combination['guid']} valid till {datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}")
                     return True
-        except ErrorGettingData as e:
-            _LOGGER.error( f'Error getting CombinatonInfo: {e.value}')
         except Exception as e:
-            _LOGGER.error( f'Exception reading guid data: {e.args}')
+            _LOGGER.error( f'Exception decoding guid data: {e.args}')
         return False
 
     """Properties"""
