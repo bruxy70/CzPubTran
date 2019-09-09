@@ -8,9 +8,15 @@ logging.basicConfig(level=logging.ERROR)
 async def test():
     session=aiohttp.ClientSession(raise_for_status=True)
     bus = czpubtran(session,'')
-    await bus.async_find_connection('Chyne, Haje','Ortenovo namesti','ABCz')
-    print(f'Connection from {bus.origin} to {bus.destination} using timetable{bus.combination_id}')
+
+    timetables = await bus.async_list_combination_ids()
+    print("Listing available timetables (Combination IDs)")
+    print(timetables)
+
     print('------------------------------------------------')
+
+    await bus.async_find_connection('Chyne, Haje','Ortenovo namesti','ABCz')
+    print(f'Connection from {bus.origin} to {bus.destination} using timetable {bus.combination_id}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
     print('Connections:')
