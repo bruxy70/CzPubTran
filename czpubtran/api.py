@@ -11,7 +11,7 @@ import asyncio
 import aiohttp
 import async_timeout
 
-HTTP_TIMEOUT = 5
+HTTP_TIMEOUT = 10
 
 _LOGGER = logging.getLogger(__name__)
 
