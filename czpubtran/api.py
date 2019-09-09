@@ -98,7 +98,7 @@ class czpubtran():
             if connection_decoded is None:
                 raise ErrorGettingData('Error passing the JSON response')
             if "handle" not in connection_decoded:
-                raise ErrorGettingData(f'Did not find any connection from {entity._origin} to {entity._destination}')
+                raise ErrorGettingData(f'Did not find any connection from {origin} to {destination}')
         except (asyncio.TimeoutError):
             _LOGGER.error( f'Response timeout getting public transport connection')
             return False
