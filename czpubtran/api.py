@@ -78,14 +78,8 @@ class czpubtran():
 
     async def async_find_connection(self,origin,destination,combination_id):
         """Find a connection from origin to destination. Return True if succesfull."""
-        if not self._guid_exists(combination_id):
-            try:
-                with async_timeout.timeout(HTTP_TIMEOUT):            
-                    if not await self._async_find_schedule_guid(combination_id):
-                        return False
-            except:
-                _LOGGER.error( f'Failed to find timetable combination ID')
-                return False
+        if not self._guid_exists(combination_id) and not await self._async_find_schedule_guid(combination_id):
+            return False
         self._origin = origin
         self._destination = destination
         self._combination_id = combination_id
@@ -105,13 +99,16 @@ class czpubtran():
                 raise ErrorGettingData('Error passing the JSON response')
             if "handle" not in connection_decoded:
                 raise ErrorGettingData(f'Did not find any connection from {entity._origin} to {entity._destination}')
+        except (asyncio.TimeoutError):
+            _LOGGER.error( f'Response timeout getting public transport connection')
+            return False
         except ErrorGettingData as e:
             self._load_defaults()
-            _LOGGER.error( f'Error getting connection data: {e.value}')
+            _LOGGER.error( f'Error getting public transport connection data: {e.value}')
             return False
         except Exception as e:
             self._load_defaults()
-            _LOGGER.error( f'Exception reading connection data: {e.args}')
+            _LOGGER.error( f'Exception reading public transport connection data: {e.args}')
             return False
         try:
             connection = connection_decoded["connInfo"]["connections"][0]
@@ -187,6 +184,9 @@ class czpubtran():
                 raise ErrorGettingData('Error passing the timetable combination ID JSON response')
             if 'data' not in combination_decoded:
                 raise ErrorGettingData('Timetable combination ID API returned no data')
+        except (asyncio.TimeoutError):
+            _LOGGER.error( f'Response timeout reading timetable combination ID')
+            return False
         except ErrorGettingData as e:
             _LOGGER.error( f'Error getting CombinatonInfo: {e.value}')
             return False
