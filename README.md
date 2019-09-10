@@ -24,18 +24,39 @@ async def test():
 
     print('------------------------------------------------')
 
-    await bus.async_find_connection('Chyne, Haje','Ortenovo namesti','ABCz')
-    print(f'Connection from {bus.origin} to {bus.destination} using timetable {bus.combination_id}:')
+    await bus.async_find_connection('Namesti Republiky','Chodov','ABCz')
+    print(f'First connection from {bus.origin} to {bus.destination} using timetable {bus.combination_id}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
     print('Connections:')
-    for connection in bus.connections:
-        print(f"line {connection['line']} "
-            f"at {connection['depTime']} "
-            f"from {connection['depStation']} "
-            f"-> {connection['arrStation']} "
-            f"{connection['arrTime']} "
-            f"(delay: {connection['delay']} min)")
+    for i,description in [(0,'1st connection'),(1,'2nd connection')]:
+        print(f'{description}:')
+        for detail in bus.connection_detail[i]:
+            print(f"line {detail['line']} "
+                f"at {detail['depTime']} "
+                f"from {detail['depStation']} "
+                f"-> {detail['arrStation']} "
+                f"{detail['arrTime']} "
+                f"(delay: {detail['delay']} min)")
+
+    print('------------------------------------------------')
+
+    t = datetime.strptime("23:20","%H:%M").time()
+    await bus.async_find_connection('Namesti Republiky','Chodov','ABCz',t)
+    print(f'Scheduled connection from {bus.origin} to {bus.destination} at {t}:')
+    print(f'Departure: {bus.departure} line {bus.line}')
+    print(f'Duration: {bus.duration}')
+    print('Connections:')
+    for i,description in [(0,'1st connection'),(1,'2nd connection')]:
+        print(f'{description}:')
+        for detail in bus.connection_detail[i]:
+            print(f"line {detail['line']} "
+                f"at {detail['depTime']} "
+                f"from {detail['depStation']} "
+                f"-> {detail['arrStation']} "
+                f"{detail['arrTime']} "
+                f"(delay: {detail['delay']} min)")
+
     await session.close()
 
 asyncio.run(test())```
