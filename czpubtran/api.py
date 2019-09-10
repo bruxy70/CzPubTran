@@ -47,7 +47,7 @@ class czpubtran():
         self._line = ''
         self._combination_id = ''
         self._duration = ''
-        self._connections = []
+        self._connection_detail = [[],[]]
 
     async def async_list_combination_ids(self):
         """List combination IDs available for the user account"""
@@ -75,8 +75,25 @@ class czpubtran():
             _LOGGER.error( f'Exception reading combination IDs: {e.args}')
         return ids
         
+    def _get_connection(self,connection,index):
+        """Decode and append connection detail"""
+        for trains in connection["trains"]:
+            c={}
+            c['line']=str(trains["trainData"]["info"]["num1"])
+            c['depTime']=trains["trainData"]["route"][0]["depTime"]
+            c['depStation']=trains["trainData"]["route"][0]["station"]["name"]
+            if "arrTime" in trains["trainData"]["route"][1]:
+                c['arrTime']=trains["trainData"]["route"][1]["arrTime"]
+            else:
+                c['arrTime']=trains["trainData"]["route"][1]["depTime"]
+            c['arrStation']=trains["trainData"]["route"][1]["station"]["name"]
+            if 'delay' in trains and trains['delay'] >0:
+                c['delay'] = trains["delay"]
+            else:
+                c['delay'] = ''
+            self._connection_detail[index].append(c)
 
-    async def async_find_connection(self,origin,destination,combination_id):
+    async def async_find_connection(self,origin,destination,combination_id,time=None):
         """Find a connection from origin to destination. Return True if succesfull."""
         if not self._guid_exists(combination_id) and not await self._async_find_schedule_guid(combination_id):
             return False
@@ -84,7 +101,9 @@ class czpubtran():
         self._destination = destination
         self._combination_id = combination_id
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
-        payload = {'from':origin, 'to':destination,'userId':self._user_id} if self._user_id!='' else {'from':origin, 'to':destination}
+        payload={'from':origin, 'to':destination,'maxCount':2}
+        if self._user_id!='': payload['userId']=self._user_id
+        if time is not None and type(time) is datetime.date: payload['dateTime']=datetime.strptime(time,"%H:%M")
         _LOGGER.debug( f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):            
@@ -111,27 +130,17 @@ class czpubtran():
             _LOGGER.error( f'Exception reading public transport connection data: {e.args}')
             return False
         try:
-            connection = connection_decoded["connInfo"]["connections"][0]
-            _LOGGER.debug( f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
-            self._duration = connection["timeLength"]
-            self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
-            self._connections.clear()
-            for trains in connection["trains"]:
-                c={}
-                c['line']=str(trains["trainData"]["info"]["num1"])
-                c['depTime']=trains["trainData"]["route"][0]["depTime"]
-                c['depStation']=trains["trainData"]["route"][0]["station"]["name"]
-                if "arrTime" in trains["trainData"]["route"][1]:
-                    c['arrTime']=trains["trainData"]["route"][1]["arrTime"]
-                else:
-                    c['arrTime']=trains["trainData"]["route"][1]["depTime"]
-                c['arrStation']=trains["trainData"]["route"][1]["station"]["name"]
-                if 'delay' in trains and trains['delay'] >0:
-                    c['delay'] = trains["delay"]
-                else:
-                    c['delay'] = ''
-                self._connections.append(c)
-            self._line = '' if len(self._connections)==0 else self._connections[0]["line"]
+            self._connection_detail[0].clear()
+            self._connection_detail[1].clear()
+            if len(connection_decoded["connInfo"]["connections"])>=1:
+                connection = connection_decoded["connInfo"]["connections"][0]
+                _LOGGER.debug( f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
+                self._duration = connection["timeLength"]
+                self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
+                self._get_connection(connection,0)
+                self._line = '' if len(self._connection_detail[0])==0 else self._connection_detail[0][0]["line"]
+                if len(connection_decoded["connInfo"]["connections"])>=2: 
+                    self._get_connection(connection_decoded["connInfo"]["connections"][1],1)
             return True
         except Exception as e:
             self._load_defaults()
@@ -229,5 +238,5 @@ class czpubtran():
         return self._duration
 
     @property
-    def connections(self):
-        return self._connections
+    def connection_detail(self):
+        return self._connection_detail

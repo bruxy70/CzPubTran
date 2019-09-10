@@ -28,14 +28,15 @@ async def test():
     print(f'Connection from {bus.origin} to {bus.destination} using timetable {bus.combination_id}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
-    print('Connections:')
-    for connection in bus.connections:
-        print(f"line {connection['line']} "
-            f"at {connection['depTime']} "
-            f"from {connection['depStation']} "
-            f"-> {connection['arrStation']} "
-            f"{connection['arrTime']} "
-            f"(delay: {connection['delay']} min)")
+    for i,description in [(1,'1st connection'),(2,'2nd connection')]:
+        print(f'{description}:')
+        for detail in bus.connection_detail[i]:
+            print(f"line {detail['line']} "
+                f"at {detail['depTime']} "
+                f"from {detail['depStation']} "
+                f"-> {detail['arrStation']} "
+                f"{detail['arrTime']} "
+                f"(delay: {detail['delay']} min)")
     await session.close()
 
 asyncio.run(test())```
