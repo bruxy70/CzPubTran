@@ -93,7 +93,7 @@ class czpubtran():
                 c['delay'] = ''
             self._connection_detail[index].append(c)
 
-    async def async_find_connection(self,origin,destination,combination_id,time=None):
+    async def async_find_connection(self,origin,destination,combination_id,t=None):
         """Find a connection from origin to destination. Return True if succesfull."""
         if not self._guid_exists(combination_id) and not await self._async_find_schedule_guid(combination_id):
             return False
@@ -101,9 +101,9 @@ class czpubtran():
         self._destination = destination
         self._combination_id = combination_id
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
-        payload={'from':origin, 'to':destination,'maxCount':2}
+        payload={'from':origin, 'to':destination,'maxCount':'2'}
         if self._user_id!='': payload['userId']=self._user_id
-        if time is not None and type(time) is datetime.date: payload['dateTime']=datetime.strptime(time,"%H:%M")
+        if t is not None and type(t) is time: payload['dateTime']=t.strftime("%H:%M")
         _LOGGER.debug( f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):            
@@ -240,3 +240,8 @@ class czpubtran():
     @property
     def connection_detail(self):
         return self._connection_detail
+
+    """For backward compatibility. To be depreciated"""
+    @property
+    def connection(self):
+        return self._connection_detail[0]    

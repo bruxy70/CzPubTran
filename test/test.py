@@ -16,12 +16,12 @@ async def test():
 
     print('------------------------------------------------')
 
-    await bus.async_find_connection('Chyne, Haje','Ortenovo namesti','ABCz')
-    print(f'Connection from {bus.origin} to {bus.destination} using timetable {bus.combination_id}:')
+    await bus.async_find_connection('Namesti Republiky','Chodov','ABCz')
+    print(f'First connection from {bus.origin} to {bus.destination} using timetable {bus.combination_id}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
     print('Connections:')
-    for i,description in [(1,'1st connection'),(2,'2nd connection')]:
+    for i,description in [(0,'1st connection'),(1,'2nd connection')]:
         print(f'{description}:')
         for detail in bus.connection_detail[i]:
             print(f"line {detail['line']} "
@@ -31,12 +31,23 @@ async def test():
                 f"{detail['arrTime']} "
                 f"(delay: {detail['delay']} min)")
 
-    t = time.strptime("23:00","%H:%M")
-    await bus.async_find_connection('Ortenovo namesti','Chyne, Haje','ABCz',t)
-    print(f'Connection from {bus.origin} to {bus.destination} at {}:')
+    print('------------------------------------------------')
+
+    t = datetime.strptime("23:20","%H:%M").time()
+    await bus.async_find_connection('Namesti Republiky','Chodov','ABCz',t)
+    print(f'Scheduled connection from {bus.origin} to {bus.destination} at {t}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
-
+    print('Connections:')
+    for i,description in [(0,'1st connection'),(1,'2nd connection')]:
+        print(f'{description}:')
+        for detail in bus.connection_detail[i]:
+            print(f"line {detail['line']} "
+                f"at {detail['depTime']} "
+                f"from {detail['depStation']} "
+                f"-> {detail['arrStation']} "
+                f"{detail['arrTime']} "
+                f"(delay: {detail['delay']} min)")
 
     await session.close()
 
