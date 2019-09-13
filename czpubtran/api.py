@@ -21,7 +21,14 @@ class Guid_Not_Found(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
-    
+
+def isTime(time_text):
+    try:
+        datetime.strptime(time_text,'%H:%M')
+        return True
+    except ValueError:
+        return False
+
 class ErrorGettingData(Exception):
     """Raised when we cannot get data from API"""
     def __init__(self, value):
@@ -47,6 +54,7 @@ class czpubtran():
         self._line = ''
         self._combination_id = ''
         self._duration = ''
+        self._start_time = None
         self._connection_detail = [[],[]]
 
     async def async_list_combination_ids(self):
@@ -93,17 +101,18 @@ class czpubtran():
                 c['delay'] = ''
             self._connection_detail[index].append(c)
 
-    async def async_find_connection(self,origin,destination,combination_id,t=None):
+    async def async_find_connection(self,origin,destination,combination_id,start_time=None):
         """Find a connection from origin to destination. Return True if succesfull."""
         if not self._guid_exists(combination_id) and not await self._async_find_schedule_guid(combination_id):
             return False
         self._origin = origin
         self._destination = destination
         self._combination_id = combination_id
+        self._start_time = None if start_time is None or not isTime(start_time) else start_time
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
         payload={'from':origin, 'to':destination,'maxCount':'2'}
         if self._user_id!='': payload['userId']=self._user_id
-        if t is not None and type(t) is time: payload['dateTime']=t.strftime("%H:%M")
+        if self._start_time is not None: payload['dateTime']=self._start_time
         _LOGGER.debug( f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):            
@@ -238,6 +247,10 @@ class czpubtran():
     @property
     def duration(self):
         return self._duration
+
+    @property
+    def start_time(self):
+        return self._start_time
 
     @property
     def connection_detail(self):

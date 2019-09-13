@@ -41,9 +41,8 @@ async def test():
 
     print('------------------------------------------------')
 
-    t = datetime.strptime("23:20","%H:%M").time()
-    await bus.async_find_connection('Namesti Republiky','Chodov','ABCz',t)
-    print(f'Scheduled connection from {bus.origin} to {bus.destination} at {t}:')
+    await bus.async_find_connection('Namesti Republiky','Chodov','ABCz','23:00')
+    print(f'Scheduled connection from {bus.origin} to {bus.destination} at {bus.start_time}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
     print('Connections:')
