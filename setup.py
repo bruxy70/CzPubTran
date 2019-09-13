@@ -1,6 +1,6 @@
 import setuptools
 
-REVISION = '0.1.16'
+REVISION = '0.1.17'
 PROJECT_NAME = 'czpubtran'
 PROJECT_AUTHORS = "Václav Chaloupka"
 PROJECT_EMAILS = 'vasek.chaloupka@hotmail.com'
