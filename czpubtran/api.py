@@ -103,7 +103,7 @@ class czpubtran():
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
         payload={'from':origin, 'to':destination,'maxCount':'2'}
         if self._user_id!='': payload['userId']=self._user_id
-        if t is not None and type(t) is time: payload['dateTime']=t.strftime("%H:%M")
+        if t is not None: payload['dateTime']=t
         _LOGGER.debug( f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):            
