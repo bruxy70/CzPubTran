@@ -21,7 +21,14 @@ class Guid_Not_Found(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
-    
+
+def isTime(time_text):
+    try:
+        datetime.strptime(time_text,'%H:%M')
+        return True
+    except ValueError:
+        return False
+
 class ErrorGettingData(Exception):
     """Raised when we cannot get data from API"""
     def __init__(self, value):
@@ -101,7 +108,7 @@ class czpubtran():
         self._origin = origin
         self._destination = destination
         self._combination_id = combination_id
-        self._start_time = start_time
+        self._start_time = None if start_time is None or not isTime(start_time) else start_time
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
         payload={'from':origin, 'to':destination,'maxCount':'2'}
         if self._user_id!='': payload['userId']=self._user_id
