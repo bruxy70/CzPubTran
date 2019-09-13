@@ -152,7 +152,7 @@ class czpubtran():
         try:
             if combination_id in self._combination_ids:
                 today=datetime.now().date()
-                return bool(self._combination_ids[combination_id]['validTo'] >= today)
+                return bool(self._combination_ids[combination_id]['dayRefreshed']==today and self._combination_ids[combination_id]['validTo'] >= today)
             else:
                 return False
         except:
@@ -166,12 +166,13 @@ class czpubtran():
             _LOGGER.error(f'GUID for timetable combination ID {combination_id} not found!')
             return ''
     
-    def _add_combination_id(self,combination_id,guid,valid_to):
+    def _add_combination_id(self,combination_id,guid,valid_to,day_refreshed):
         """Register newly found timetable Combination ID - so that it does not have to be obtained each time"""
         if combination_id not in self._combination_ids:
             self._combination_ids[combination_id]={}
         self._combination_ids[combination_id]['guid']=guid
         self._combination_ids[combination_id]['validTo']=valid_to
+        self._combination_ids[combination_id]['dayRefreshed']=day_refreshed
 
     async def _async_find_schedule_guid(self,combination_id):
         """Find guid of the timetable Combination ID (combination ID can be found on the CHAPS API web site)"""
@@ -205,7 +206,8 @@ class czpubtran():
         try:
             for combination in combination_decoded["data"]:
                 if combination['id'] == combination_id:
-                    self._add_combination_id(combination_id,combination["guid"],datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date())
+                    today=datetime.now().date()
+                    self._add_combination_id(combination_id,combination["guid"],datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date(),today)
                     _LOGGER.debug( f"found guid {combination['guid']} valid till {datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}")
                     return True
         except Exception as e:
