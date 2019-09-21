@@ -21,12 +21,14 @@ class Guid_Not_Found(Exception):
     """Raised when we cannot find guid"""
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
+
 def isTime(time_text):
     try:
-        datetime.strptime(time_text,'%H:%M')
+        datetime.strptime(time_text, '%H:%M')
         return True
     except ValueError:
         return False
@@ -36,12 +38,13 @@ class ErrorGettingData(Exception):
     """Raised when we cannot get data from API"""
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
 
 class czpubtran():
-    
+
     """Constructor"""
     def __init__(self, session, user_id):
         """Setup of the czpubtran library"""
@@ -49,7 +52,7 @@ class czpubtran():
         self._combination_ids = {}
         self._load_defaults()
         self._session = session
-    
+
     def _load_defaults(self):
         """Erase the information"""
         self._origin = ''
@@ -63,15 +66,15 @@ class czpubtran():
 
     async def async_list_combination_ids(self):
         """List combination IDs available for the user account"""
-        url_combination  = 'https://ext.crws.cz/api/'
-        payload = {'userId':self._user_id} if self._user_id != "" else {}
+        url_combination = 'https://ext.crws.cz/api/'
+        payload = {'userId': self._user_id} if self._user_id != "" else {}
         ids = []
         try:
-            with async_timeout.timeout(HTTP_TIMEOUT):            
+            with async_timeout.timeout(HTTP_TIMEOUT):
                 combination_response = await self._session.get(url_combination, params=payload)
             if combination_response is None:
                 raise ErrorGettingData('Response timeout reading timetable combination IDs')
-            _LOGGER.debug( f'url - {combination_response.url}')
+            _LOGGER.debug(f'url - {combination_response.url}')
             if combination_response.status != 200:
                 raise ErrorGettingData(f'Timetable combination IDs API returned response code {combination_response.status} ({await combination_response.text()})')
             combination_decoded = await combination_response.json()
@@ -82,11 +85,11 @@ class czpubtran():
             for combination in combination_decoded["data"]:
                 ids.append(combination['id'])
         except ErrorGettingData as e:
-            _LOGGER.error( f'Error getting Combinaton IDs: {e.value}')
+            _LOGGER.error(f'Error getting Combinaton IDs: {e.value}')
         except Exception as e:
-            _LOGGER.error( f'Exception reading combination IDs: {e.args}')
+            _LOGGER.error(f'Exception reading combination IDs: {e.args}')
         return ids
-        
+
     def _get_connection(self, connection, index):
         """Decode and append connection detail"""
         for trains in connection["trains"]:
@@ -114,15 +117,15 @@ class czpubtran():
         self._combination_id = combination_id
         self._start_time = None if start_time is None or not isTime(start_time) else start_time
         url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
-        payload={'from':origin, 'to':destination, 'maxCount':'2'}
-        if self._user_id!='':
+        payload = {'from': origin, 'to': destination, 'maxCount': '2'}
+        if self._user_id != '':
             payload['userId'] = self._user_id
         if self._start_time is not None:
             payload['dateTime'] = self._start_time
         _LOGGER.debug(f'Checking connection from {origin} to {destination}')
         try:
-            with async_timeout.timeout(HTTP_TIMEOUT):            
-                connection_response = await self._session.get(url_connection,params=payload)
+            with async_timeout.timeout(HTTP_TIMEOUT):
+                connection_response = await self._session.get(url_connection, params=payload)
             if connection_response is None:
                 raise ErrorGettingData('Response timeout')
             _LOGGER.debug(f'(url - {str(connection_response.url)}')
@@ -147,44 +150,44 @@ class czpubtran():
         try:
             self._connection_detail[0].clear()
             self._connection_detail[1].clear()
-            if len(connection_decoded["connInfo"]["connections"])>=1:
+            if len(connection_decoded["connInfo"]["connections"]) >= 1:
                 connection = connection_decoded["connInfo"]["connections"][0]
                 _LOGGER.debug(f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
                 self._duration = connection["timeLength"]
                 self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
-                self._get_connection(connection,0)
+                self._get_connection(connection, 0)
                 self._line = '' if len(self._connection_detail[0]) == 0 else self._connection_detail[0][0]["line"]
-                if len(connection_decoded["connInfo"]["connections"]) >= 2: 
-                    self._get_connection(connection_decoded["connInfo"]["connections"][1],1)
+                if len(connection_decoded["connInfo"]["connections"]) >= 2:
+                    self._get_connection(connection_decoded["connInfo"]["connections"][1], 1)
             return True
         except Exception as e:
             self._load_defaults()
             _LOGGER.error(f'Exception decoding received connection data: {e.args}')
             return False
 
-    def _guid_exists(self,combination_id):
+    def _guid_exists(self, combination_id):
         """Return False if the timetable Combination ID needs to be updated."""
         try:
             if combination_id in self._combination_ids:
-                today=datetime.now().date()
+                today = datetime.now().date()
                 return bool(self._combination_ids[combination_id]['dayRefreshed'] == today and self._combination_ids[combination_id]['validTo'] >= today)
             else:
                 return False
         except:
-            return False # Refresh data on Error
+            return False  # Refresh data on Error
 
-    def _guid(self,combination_id):
+    def _guid(self, combination_id):
         """Return guid of the timetable combination"""
         if combination_id in self._combination_ids:
             return self._combination_ids[combination_id]['guid']
         else:
             _LOGGER.error(f'GUID for timetable combination ID {combination_id} not found!')
             return ''
-    
+
     def _add_combination_id(self, combination_id, guid, valid_to, day_refreshed):
         """Register newly found timetable Combination ID - so that it does not have to be obtained each time"""
         if combination_id not in self._combination_ids:
-            self._combination_ids[combination_id]={}
+            self._combination_ids[combination_id] = {}
         self._combination_ids[combination_id]['guid'] = guid
         self._combination_ids[combination_id]['validTo'] = valid_to
         self._combination_ids[combination_id]['dayRefreshed'] = day_refreshed
@@ -194,11 +197,11 @@ class czpubtran():
         if self._guid_exists(combination_id):
             return True
         _LOGGER.debug(f'Updating CombinationInfo guid {combination_id}')
-        url_combination  = 'https://ext.crws.cz/api/'
-        payload = {'userId':self._user_id} if self._user_id != "" else {}
+        url_combination = 'https://ext.crws.cz/api/'
+        payload = {'userId': self._user_id} if self._user_id != "" else {}
         try:
-            with async_timeout.timeout(HTTP_TIMEOUT):            
-                combination_response = await self._session.get(url_combination,params=payload)
+            with async_timeout.timeout(HTTP_TIMEOUT):
+                combination_response = await self._session.get(url_combination, params=payload)
             if combination_response is None:
                 raise ErrorGettingData('Response timeout reading timetable combination ID')
             _LOGGER.debug(f'url - {combination_response.url}')
@@ -223,7 +226,7 @@ class czpubtran():
                 if combination['id'] == combination_id:
                     today = datetime.now().date()
                     self._add_combination_id(combination_id, combination["guid"], datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date(), today)
-                    _LOGGER.debug( f"found guid {combination['guid']} valid till {datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}")
+                    _LOGGER.debug(f"found guid {combination['guid']} valid till {datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}")
                     return True
         except Exception as e:
             _LOGGER.error(f'Exception decoding guid data: {e.args}')
