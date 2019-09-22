@@ -1,8 +1,10 @@
 """
 czpubtran library
-Calling CHAPS REST API to get information about public transport between two points
-It uses two APIs - one to get guid of the timetable combination. Second (async_find_connection) to find the connection
-The first one is internal and is called automatically if the guid is empty or expired
+Calling CHAPS REST API to get information about public transport
+between two points. It uses two APIs - one to get guid of the
+timetable combination. Second (async_find_connection) to find the connection
+The first one is internal and is called automatically
+if the guid is empty or expired.
 More info on https://crws.docs.apiary.io/
 """
 import logging
@@ -71,17 +73,30 @@ class czpubtran():
         ids = []
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):
-                combination_response = await self._session.get(url_combination, params=payload)
+                combination_response = await self._session.get(
+                    url_combination,
+                    params=payload
+                )
             if combination_response is None:
-                raise ErrorGettingData('Response timeout reading timetable combination IDs')
+                raise ErrorGettingData(
+                    'Response timeout reading timetable combination IDs'
+                )
             _LOGGER.debug(f'url - {combination_response.url}')
             if combination_response.status != 200:
-                raise ErrorGettingData(f'Timetable combination IDs API returned response code {combination_response.status} ({await combination_response.text()})')
+                raise ErrorGettingData(
+                    f'Timetable combination IDs API returned response code '
+                    f'{combination_response.status} '
+                    f'({await combination_response.text()})'
+                )
             combination_decoded = await combination_response.json()
             if combination_decoded is None:
-                raise ErrorGettingData('Error passing the timetable combination IDs JSON response')
+                raise ErrorGettingData(
+                    'Error passing the timetable combination IDs JSON response'
+                )
             if 'data' not in combination_decoded:
-                raise ErrorGettingData('Timetable combination IDs API returned no data')
+                raise ErrorGettingData(
+                    'Timetable combination IDs API returned no data'
+                )
             for combination in combination_decoded["data"]:
                 ids.append(combination['id'])
         except ErrorGettingData as e:
@@ -108,8 +123,15 @@ class czpubtran():
                 c['delay'] = ''
             self._connection_detail[index].append(c)
 
-    async def async_find_connection(self, origin, destination, combination_id, start_time=None):
-        """Find a connection from origin to destination. Return True if succesfull."""
+    async def async_find_connection(
+        self,
+        origin,
+        destination,
+        combination_id,
+        start_time=None
+    ):
+        """Find a connection from origin to destination.
+        Return True if succesfull."""
         if not self._guid_exists(combination_id) and not await self._async_find_schedule_guid(combination_id):
             return False
         self._origin = origin
@@ -125,34 +147,53 @@ class czpubtran():
         _LOGGER.debug(f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):
-                connection_response = await self._session.get(url_connection, params=payload)
+                connection_response = await self._session.get(
+                    url_connection,
+                    params=payload
+                )
             if connection_response is None:
                 raise ErrorGettingData('Response timeout')
             _LOGGER.debug(f'(url - {str(connection_response.url)}')
             if connection_response.status != 200:
-                raise ErrorGettingData(f'API returned response code {connection_response.status} ({await connection_response.text()})')
+                raise ErrorGettingData(
+                    f'API returned response code '
+                    f'{connection_response.status} '
+                    f'({await connection_response.text()})'
+                )
             connection_decoded = await connection_response.json()
             if connection_decoded is None:
                 raise ErrorGettingData('Error passing the JSON response')
             if "handle" not in connection_decoded:
-                raise ErrorGettingData(f'Did not find any connection from {origin} to {destination}')
+                raise ErrorGettingData(
+                    f'Did not find any connection '
+                    f'from {origin} to {destination}'
+                )
         except (asyncio.TimeoutError):
-            _LOGGER.error(f'Response timeout getting public transport connection')
+            _LOGGER.error(
+                f'Response timeout getting public transport connection'
+            )
             return False
         except ErrorGettingData as e:
             self._load_defaults()
-            _LOGGER.error(f'Error getting public transport connection data: {e.value}')
+            _LOGGER.error(
+                f'Error getting public transport connection data: {e.value}'
+            )
             return False
         except Exception as e:
             self._load_defaults()
-            _LOGGER.error(f'Exception reading public transport connection data: {e.args}')
+            _LOGGER.error(
+                f'Exception reading public transport connection data: {e.args}'
+            )
             return False
         try:
             self._connection_detail[0].clear()
             self._connection_detail[1].clear()
             if len(connection_decoded["connInfo"]["connections"]) >= 1:
                 connection = connection_decoded["connInfo"]["connections"][0]
-                _LOGGER.debug(f"(connection from {origin} to {destination}: found id {str(connection['id'])}")
+                _LOGGER.debug(
+                    f"(connection from {origin} to {destination}: "
+                    f"found id {str(connection['id'])}"
+                )
                 self._duration = connection["timeLength"]
                 self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
                 self._get_connection(connection, 0)
@@ -162,7 +203,9 @@ class czpubtran():
             return True
         except Exception as e:
             self._load_defaults()
-            _LOGGER.error(f'Exception decoding received connection data: {e.args}')
+            _LOGGER.error(
+                f'Exception decoding received connection data: {e.args}'
+            )
             return False
 
     def _guid_exists(self, combination_id):
@@ -170,7 +213,10 @@ class czpubtran():
         try:
             if combination_id in self._combination_ids:
                 today = datetime.now().date()
-                return bool(self._combination_ids[combination_id]['dayRefreshed'] == today and self._combination_ids[combination_id]['validTo'] >= today)
+                return bool(
+                    self._combination_ids[combination_id]['dayRefreshed'] == today and
+                    self._combination_ids[combination_id]['validTo'] >= today
+                )
             else:
                 return False
         except:
@@ -206,7 +252,10 @@ class czpubtran():
                 raise ErrorGettingData('Response timeout reading timetable combination ID')
             _LOGGER.debug(f'url - {combination_response.url}')
             if combination_response.status != 200:
-                raise ErrorGettingData(f'Timetable combination ID API returned response code {combination_response.status} ({await combination_response.text()})')
+                raise ErrorGettingData(
+                    f'Timetable combination ID API returned response code '
+                    f'{combination_response.status} ({await combination_response.text()})'
+                )
             combination_decoded = await combination_response.json()
             if combination_decoded is None:
                 raise ErrorGettingData('Error passing the timetable combination ID JSON response')
@@ -225,8 +274,16 @@ class czpubtran():
             for combination in combination_decoded["data"]:
                 if combination['id'] == combination_id:
                     today = datetime.now().date()
-                    self._add_combination_id(combination_id, combination["guid"], datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date(), today)
-                    _LOGGER.debug(f"found guid {combination['guid']} valid till {datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}")
+                    self._add_combination_id(
+                        combination_id,
+                        combination["guid"],
+                        datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date(),
+                        today
+                    )
+                    _LOGGER.debug(
+                        f"found guid {combination['guid']} valid till "
+                        f"{datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}"
+                    )
                     return True
         except Exception as e:
             _LOGGER.error(f'Exception decoding guid data: {e.args}')
