@@ -1,6 +1,6 @@
 import setuptools
 
-REVISION = '0.1.18'
+REVISION = '0.1.19'
 PROJECT_NAME = 'czpubtran'
 PROJECT_AUTHORS = "Václav Chaloupka"
 PROJECT_EMAILS = 'vasek.chaloupka@hotmail.com'
@@ -26,9 +26,8 @@ setuptools.setup(
     description=SHORT_DESCRIPTION,
     long_description=LONG,
     long_description_content_type="text/markdown",
-    long_description_markdown_filename='README.md',  # uses setuptools-markdown
     license='MIT',
-    classifiers=(
+    classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
@@ -36,5 +35,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
-    ),
+    ],
 )

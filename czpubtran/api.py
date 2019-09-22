@@ -18,6 +18,8 @@ HTTP_TIMEOUT = 10
 
 _LOGGER = logging.getLogger(__name__)
 
+URL_CONNECTIONS = 'https://ext.crws.cz/api/{}/connections'
+
 
 class Guid_Not_Found(Exception):
     """Raised when we cannot find guid"""
@@ -132,13 +134,17 @@ class czpubtran():
     ):
         """Find a connection from origin to destination.
         Return True if succesfull."""
-        if not self._guid_exists(combination_id) and not await self._async_find_schedule_guid(combination_id):
+        if (not self._guid_exists(combination_id) and
+                not await self._async_find_schedule_guid(combination_id)):
             return False
         self._origin = origin
         self._destination = destination
         self._combination_id = combination_id
-        self._start_time = None if start_time is None or not isTime(start_time) else start_time
-        url_connection = f'https://ext.crws.cz/api/{self._guid(combination_id)}/connections'
+        if start_time is None:
+            self._start_time = None
+        else:
+            self._start_time = start_time
+        url_connection = URL_CONNECTIONS.format(self._guid(combination_id))
         payload = {'from': origin, 'to': destination, 'maxCount': '2'}
         if self._user_id != '':
             payload['userId'] = self._user_id
@@ -197,9 +203,14 @@ class czpubtran():
                 self._duration = connection["timeLength"]
                 self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
                 self._get_connection(connection, 0)
-                self._line = '' if len(self._connection_detail[0]) == 0 else self._connection_detail[0][0]["line"]
+                if len(self._connection_detail[0]) == 0:
+                    self._line = ''
+                else:
+                    self._line = self._connection_detail[0][0]["line"]
                 if len(connection_decoded["connInfo"]["connections"]) >= 2:
-                    self._get_connection(connection_decoded["connInfo"]["connections"][1], 1)
+                    self._get_connection(
+                        connection_decoded["connInfo"]["connections"][1],
+                        1)
             return True
         except Exception as e:
             self._load_defaults()
@@ -227,11 +238,19 @@ class czpubtran():
         if combination_id in self._combination_ids:
             return self._combination_ids[combination_id]['guid']
         else:
-            _LOGGER.error(f'GUID for timetable combination ID {combination_id} not found!')
+            _LOGGER.error(
+                f'GUID for timetable combination ID {combination_id} not found!')
             return ''
 
-    def _add_combination_id(self, combination_id, guid, valid_to, day_refreshed):
-        """Register newly found timetable Combination ID - so that it does not have to be obtained each time"""
+    def _add_combination_id(
+        self,
+        combination_id,
+        guid,
+        valid_to,
+        day_refreshed
+    ):
+        """Register newly found timetable Combination ID
+        So it does not have to be obtained each time"""
         if combination_id not in self._combination_ids:
             self._combination_ids[combination_id] = {}
         self._combination_ids[combination_id]['guid'] = guid
@@ -239,7 +258,8 @@ class czpubtran():
         self._combination_ids[combination_id]['dayRefreshed'] = day_refreshed
 
     async def _async_find_schedule_guid(self, combination_id):
-        """Find guid of the timetable Combination ID (combination ID can be found on the CHAPS API web site)"""
+        """Find guid of the timetable Combination ID
+        (combination ID can be found on the CHAPS API web site)"""
         if self._guid_exists(combination_id):
             return True
         _LOGGER.debug(f'Updating CombinationInfo guid {combination_id}')
@@ -247,9 +267,12 @@ class czpubtran():
         payload = {'userId': self._user_id} if self._user_id != "" else {}
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):
-                combination_response = await self._session.get(url_combination, params=payload)
+                combination_response = await self._session.get(
+                    url_combination,
+                    params=payload)
             if combination_response is None:
-                raise ErrorGettingData('Response timeout reading timetable combination ID')
+                raise ErrorGettingData(
+                    'Response timeout reading timetable combination ID')
             _LOGGER.debug(f'url - {combination_response.url}')
             if combination_response.status != 200:
                 raise ErrorGettingData(
@@ -258,9 +281,11 @@ class czpubtran():
                 )
             combination_decoded = await combination_response.json()
             if combination_decoded is None:
-                raise ErrorGettingData('Error passing the timetable combination ID JSON response')
+                raise ErrorGettingData(
+                    'Error passing the timetable combination ID JSON response')
             if 'data' not in combination_decoded:
-                raise ErrorGettingData('Timetable combination ID API returned no data')
+                raise ErrorGettingData(
+                    'Timetable combination ID API returned no data')
         except (asyncio.TimeoutError):
             _LOGGER.error(f'Response timeout reading timetable combination ID')
             return False
@@ -277,12 +302,14 @@ class czpubtran():
                     self._add_combination_id(
                         combination_id,
                         combination["guid"],
-                        datetime.strptime(combination["ttValidTo"], "%d.%m.%Y").date(),
+                        datetime.strptime(
+                            combination["ttValidTo"],
+                            "%d.%m.%Y").date(),
                         today
                     )
                     _LOGGER.debug(
                         f"found guid {combination['guid']} valid till "
-                        f"{datetime.strptime(combination['ttValidTo'], '%d.%m.%Y').date()}"
+                        f"{datetime.strptime(combination['ttValidTo'],'%d.%m.%Y').date()}"
                     )
                     return True
         except Exception as e:
