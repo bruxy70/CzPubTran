@@ -52,30 +52,30 @@ class czpubtran():
     """Constructor"""
     def __init__(self, session, user_id):
         """Setup of the czpubtran library"""
-        self._user_id = user_id
-        self._combination_ids = {}
-        self._load_defaults()
-        self._session = session
+        self.__user_id = user_id
+        self.__combination_ids = {}
+        self.__load_defaults()
+        self.__session = session
 
-    def _load_defaults(self):
+    def __load_defaults(self):
         """Erase the information"""
-        self._origin = ''
-        self._destination = ''
-        self._departure = ''
-        self._line = ''
-        self._combination_id = ''
-        self._duration = ''
-        self._start_time = None
-        self._connection_detail = [[], []]
+        self.__origin = ''
+        self.__destination = ''
+        self.__departure = ''
+        self.__line = ''
+        self.__combination_id = ''
+        self.__duration = ''
+        self.__start_time = None
+        self.__connection_detail = [[], []]
 
     async def async_list_combination_ids(self):
         """List combination IDs available for the user account"""
         url_combination = 'https://ext.crws.cz/api/'
-        payload = {'userId': self._user_id} if self._user_id != "" else {}
+        payload = {'userId': self.__user_id} if self.__user_id != "" else {}
         ids = []
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):
-                combination_response = await self._session.get(
+                combination_response = await self.__session.get(
                     url_combination,
                     params=payload
                 )
@@ -107,7 +107,7 @@ class czpubtran():
             _LOGGER.error(f'Exception reading combination IDs: {e.args}')
         return ids
 
-    def _get_connection(self, connection, index):
+    def __get_connection(self, connection, index):
         """Decode and append connection detail"""
         for trains in connection["trains"]:
             c = {}
@@ -123,7 +123,7 @@ class czpubtran():
                 c['delay'] = trains["delay"]
             else:
                 c['delay'] = ''
-            self._connection_detail[index].append(c)
+            self.__connection_detail[index].append(c)
 
     async def async_find_connection(
         self,
@@ -134,26 +134,26 @@ class czpubtran():
     ):
         """Find a connection from origin to destination.
         Return True if succesfull."""
-        if (not self._guid_exists(combination_id) and
-                not await self._async_find_schedule_guid(combination_id)):
+        if (not self.__guid_exists(combination_id) and
+                not await self.__async_find_schedule_guid(combination_id)):
             return False
-        self._origin = origin
-        self._destination = destination
-        self._combination_id = combination_id
+        self.__origin = origin
+        self.__destination = destination
+        self.__combination_id = combination_id
         if start_time is None:
-            self._start_time = None
+            self.__start_time = None
         else:
-            self._start_time = start_time
-        url_connection = URL_CONNECTIONS.format(self._guid(combination_id))
+            self.__start_time = start_time
+        url_connection = URL_CONNECTIONS.format(self.__guid(combination_id))
         payload = {'from': origin, 'to': destination, 'maxCount': '2'}
-        if self._user_id != '':
-            payload['userId'] = self._user_id
-        if self._start_time is not None:
-            payload['dateTime'] = self._start_time
+        if self.__user_id != '':
+            payload['userId'] = self.__user_id
+        if self.__start_time is not None:
+            payload['dateTime'] = self.__start_time
         _LOGGER.debug(f'Checking connection from {origin} to {destination}')
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):
-                connection_response = await self._session.get(
+                connection_response = await self.__session.get(
                     url_connection,
                     params=payload
                 )
@@ -180,69 +180,69 @@ class czpubtran():
             )
             return False
         except ErrorGettingData as e:
-            self._load_defaults()
+            self.__load_defaults()
             _LOGGER.error(
                 f'Error getting public transport connection data: {e.value}'
             )
             return False
         except Exception as e:
-            self._load_defaults()
+            self.__load_defaults()
             _LOGGER.error(
                 f'Exception reading public transport connection data: {e.args}'
             )
             return False
         try:
-            self._connection_detail[0].clear()
-            self._connection_detail[1].clear()
+            self.__connection_detail[0].clear()
+            self.__connection_detail[1].clear()
             if len(connection_decoded["connInfo"]["connections"]) >= 1:
                 connection = connection_decoded["connInfo"]["connections"][0]
                 _LOGGER.debug(
                     f"(connection from {origin} to {destination}: "
                     f"found id {str(connection['id'])}"
                 )
-                self._duration = connection["timeLength"]
-                self._departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
-                self._get_connection(connection, 0)
-                if len(self._connection_detail[0]) == 0:
-                    self._line = ''
+                self.__duration = connection["timeLength"]
+                self.__departure = connection["trains"][0]["trainData"]["route"][0]["depTime"]
+                self.__get_connection(connection, 0)
+                if len(self.__connection_detail[0]) == 0:
+                    self.__line = ''
                 else:
-                    self._line = self._connection_detail[0][0]["line"]
+                    self.__line = self.__connection_detail[0][0]["line"]
                 if len(connection_decoded["connInfo"]["connections"]) >= 2:
-                    self._get_connection(
+                    self.__get_connection(
                         connection_decoded["connInfo"]["connections"][1],
                         1)
             return True
         except Exception as e:
-            self._load_defaults()
+            self.__load_defaults()
             _LOGGER.error(
                 f'Exception decoding received connection data: {e.args}'
             )
             return False
 
-    def _guid_exists(self, combination_id):
+    def __guid_exists(self, combination_id):
         """Return False if the timetable Combination ID needs to be updated."""
         try:
-            if combination_id in self._combination_ids:
+            if combination_id in self.__combination_ids:
                 today = datetime.now().date()
                 return bool(
-                    self._combination_ids[combination_id]['dayRefreshed'] == today and
-                    self._combination_ids[combination_id]['validTo'] >= today
+                    self.__combination_ids[combination_id]['dayRefreshed'] == today and
+                    self.__combination_ids[combination_id]['validTo'] >= today
                 )
             else:
                 return False
         except:
             return False  # Refresh data on Error
 
-    def _guid(self, combination_id):
+    def __guid(self, combination_id):
         """Return guid of the timetable combination"""
-        if combination_id in self._combination_ids:
-            return self._combination_ids[combination_id]['guid']
+        if combination_id in self.__combination_ids:
+            return self.__combination_ids[combination_id]['guid']
         else:
             _LOGGER.error(
                 f'GUID for timetable combination ID {combination_id} not found!')
             return ''
 
-    def _add_combination_id(
+    def __add_combination_id(
         self,
         combination_id,
         guid,
@@ -251,23 +251,23 @@ class czpubtran():
     ):
         """Register newly found timetable Combination ID
         So it does not have to be obtained each time"""
-        if combination_id not in self._combination_ids:
-            self._combination_ids[combination_id] = {}
-        self._combination_ids[combination_id]['guid'] = guid
-        self._combination_ids[combination_id]['validTo'] = valid_to
-        self._combination_ids[combination_id]['dayRefreshed'] = day_refreshed
+        if combination_id not in self.__combination_ids:
+            self.__combination_ids[combination_id] = {}
+        self.__combination_ids[combination_id]['guid'] = guid
+        self.__combination_ids[combination_id]['validTo'] = valid_to
+        self.__combination_ids[combination_id]['dayRefreshed'] = day_refreshed
 
-    async def _async_find_schedule_guid(self, combination_id):
+    async def __async_find_schedule_guid(self, combination_id):
         """Find guid of the timetable Combination ID
         (combination ID can be found on the CHAPS API web site)"""
-        if self._guid_exists(combination_id):
+        if self.__guid_exists(combination_id):
             return True
         _LOGGER.debug(f'Updating CombinationInfo guid {combination_id}')
         url_combination = 'https://ext.crws.cz/api/'
-        payload = {'userId': self._user_id} if self._user_id != "" else {}
+        payload = {'userId': self.__user_id} if self.__user_id != "" else {}
         try:
             with async_timeout.timeout(HTTP_TIMEOUT):
-                combination_response = await self._session.get(
+                combination_response = await self.__session.get(
                     url_combination,
                     params=payload)
             if combination_response is None:
@@ -299,7 +299,7 @@ class czpubtran():
             for combination in combination_decoded["data"]:
                 if combination['id'] == combination_id:
                     today = datetime.now().date()
-                    self._add_combination_id(
+                    self.__add_combination_id(
                         combination_id,
                         combination["guid"],
                         datetime.strptime(
@@ -319,37 +319,37 @@ class czpubtran():
     """Properties"""
     @property
     def origin(self):
-        return self._origin
+        return self.__origin
 
     @property
     def destination(self):
-        return self._destination
+        return self.__destination
 
     @property
     def combination_id(self):
-        return self._combination_id
+        return self.__combination_id
 
     @property
     def departure(self):
-        return self._departure
+        return self.__departure
 
     @property
     def line(self):
-        return self._line
+        return self.__line
 
     @property
     def duration(self):
-        return self._duration
+        return self.__duration
 
     @property
     def start_time(self):
-        return self._start_time
+        return self.__start_time
 
     @property
     def connection_detail(self):
-        return self._connection_detail
+        return self.__connection_detail
 
     """For backward compatibility. To be depreciated"""
     @property
     def connection(self):
-        return self._connection_detail[0]
+        return self.__connection_detail[0]
