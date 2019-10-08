@@ -85,10 +85,11 @@ class czpubtran():
                 )
             _LOGGER.debug(f'url - {combination_response.url}')
             if combination_response.status != 200:
+                response_text = await combination_response.text()
                 raise ErrorGettingData(
                     f'Timetable combination IDs API returned response code '
                     f'{combination_response.status} '
-                    f'({await combination_response.text()})'
+                    f'({response_text})'
                 )
             combination_decoded = await combination_response.json()
             if combination_decoded is None:
@@ -161,10 +162,11 @@ class czpubtran():
                 raise ErrorGettingData('Response timeout')
             _LOGGER.debug(f'(url - {str(connection_response.url)}')
             if connection_response.status != 200:
+                response_text = await connection_response.text()
                 raise ErrorGettingData(
                     f'API returned response code '
                     f'{connection_response.status} '
-                    f'({await connection_response.text()})'
+                    f'({response_text})'
                 )
             connection_decoded = await connection_response.json()
             if connection_decoded is None:
@@ -275,9 +277,10 @@ class czpubtran():
                     'Response timeout reading timetable combination ID')
             _LOGGER.debug(f'url - {combination_response.url}')
             if combination_response.status != 200:
+                response_text = await combination_response.text()
                 raise ErrorGettingData(
                     f'Timetable combination ID API returned response code '
-                    f'{combination_response.status} ({await combination_response.text()})'
+                    f'{combination_response.status} ({response_text})'
                 )
             combination_decoded = await combination_response.json()
             if combination_decoded is None:
