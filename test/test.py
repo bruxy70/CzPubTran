@@ -4,7 +4,7 @@ import aiohttp
 from datetime import datetime, time
 from czpubtran.api import czpubtran
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 
 async def test():
     session = aiohttp.ClientSession(raise_for_status=True)
@@ -34,7 +34,10 @@ async def test():
 
     print('------------------------------------------------')
 
-    await bus.async_find_connection('Namesti Republiky', 'Chodov', 'ABCz', '23:20')
+    try:
+        await bus.async_find_connection('Namesti Republiky', 'Chodov', 'ABCz', '23:20')
+    except Exception as e:
+        print(f'Exception{e}')
     print(f'Scheduled connection from {bus.origin} to {bus.destination} at {bus.start_time}:')
     print(f'Departure: {bus.departure} line {bus.line}')
     print(f'Duration: {bus.duration}')
