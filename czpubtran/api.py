@@ -167,8 +167,9 @@ class czpubtran:
                     raise ErrorGettingData("Removed expired combination ID")
                 if (
                     "exceptionCode" in response_text
-                    and response_text["exceptionCode"] == 4
+                    and response_text["exceptionCode"] == 1023
                 ):
+                    _LOGGER.debug('Parallel API access is not allowed.')
                     return False
             if connection_response.status != 200:
                 response_text = await connection_response.text()
