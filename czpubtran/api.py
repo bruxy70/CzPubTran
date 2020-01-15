@@ -18,7 +18,12 @@ HTTP_TIMEOUT = 10
 
 _LOGGER = logging.getLogger(__name__)
 
-URL_CONNECTIONS = "https://ext.crws.cz/api/{}/connections"
+
+URL_CONNECTIONS = "https://main.crws.cz/api/{}/connections"
+# URL_CONNECTIONS = "https://ext.crws.cz/api/{}/connections"
+# URL_CONNECTIONS = "https://ext08.crws.cz/api/{}/connections"
+# URL_CONNECTIONS = "https://ext14.crws.cz/api/{}/connections"
+# URL_CONNECTIONS = "https://crws.timetable.cz/api/{}/connections"
 
 
 class Guid_Not_Found(Exception):
